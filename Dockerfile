@@ -11,12 +11,13 @@ FROM ubuntu:22.04
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     g++ \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+
 # Create the user
 RUN useradd -ms /bin/bash runner
 RUN mkdir -p /home/runner/workdir && chown -R runner:runner /home/runner
 USER runner
 WORKDIR /home/runner/workdir
 COPY --from=builder /usr/src/code-engine/target/release/code-engine .
-EXPOSE 3000
+EXPOSE 4000
 CMD ["./code-engine"]

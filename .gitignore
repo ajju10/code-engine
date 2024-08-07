@@ -1,6 +1,7 @@
 /target
-/code-file
 /.idea
 /.vscode
 /.zed
 .env*
+binary*
+code*

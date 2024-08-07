@@ -19,7 +19,7 @@ services:
     depends_on:
       - rabbitmq
     ports:
-      - "3000:3000"
+      - "4000:4000"
     env_file:
       - .env
     command: ["./code-engine"]

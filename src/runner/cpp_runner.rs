@@ -1,5 +1,6 @@
 use std::fs;
 use std::io::Write;
+use std::os::unix::prelude::ExitStatusExt;
 use std::path;
 use std::process::{Command, Stdio};
 
@@ -70,11 +71,27 @@ impl Runner for CppRunner {
                 .map_err(|e| format!("Cannot get stdout data: {}", e))?;
             println!("Program successfully executed: {stdout}");
             Ok(stdout)
-        } else {
+        } else if !output.stderr.is_empty() {
             let stderr = String::from_utf8(output.stderr)
                 .map_err(|e| format!("Cannot get stderr data: {}", e))?;
-            println!("Error in program execution: {stderr}");
+            eprintln!("Error in program execution: {stderr}");
             Err(stderr)
+        } else {
+            if let Some(signal) = output.status.signal() {
+                let signal_name = match signal {
+                    libc::SIGFPE => "SIGFPE",
+                    libc::SIGSEGV => "SIGSEGV",
+                    libc::SIGILL => "SIGILL",
+                    libc::SIGABRT => "SIGABRT",
+                    libc::SIGBUS => "SIGBUS",
+                    _ => "Unknown Signal",
+                };
+                eprintln!("Program terminated with signal: {signal_name}");
+                Err(format!("Program terminated with signal: {signal_name}"))
+            } else {
+                eprintln!("Program terminated with code: {}", output.status);
+                Err(format!("Program terminated with code: {}", output.status))
+            }
         }
     }
 
