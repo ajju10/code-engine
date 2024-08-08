@@ -1,3 +1,4 @@
+use async_trait::async_trait;
 use mongodb::bson::DateTime;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -7,7 +8,7 @@ use crate::runner::cpp_runner::CppRunner;
 mod cpp_runner;
 mod utils;
 
-pub use utils::get_test_case_run_status;
+pub use utils::{connect_to_amqp, listen_consumer, SUBMISSION_QUEUE};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum TestCaseStatus {
@@ -101,11 +102,12 @@ pub struct PublishMessagePayload {
     pub task_request: TaskRequest,
 }
 
+#[async_trait]
 pub trait Runner {
-    fn initialize(&self, filename: &str) -> std::io::Result<()>;
-    fn compile(&self, filename: &str, binary_file: &str) -> Result<String, String>;
-    fn execute(&self, binary_file: &str, input: &str) -> Result<String, String>;
-    fn cleanup(&self, filename: &str, binary_file: &str) -> std::io::Result<()>;
+    async fn initialize(&self, filename: &str) -> std::io::Result<()>;
+    async fn compile(&self, filename: &str, binary_file: &str) -> Result<String, String>;
+    async fn execute(&self, binary_file: &str, input: &str) -> Result<String, String>;
+    async fn cleanup(&self, filename: &str, binary_file: &str) -> std::io::Result<()>;
 }
 
 pub fn get_runner(lang: &str, source_code: &str) -> Result<Box<dyn Runner + Send + Sync>, String> {
